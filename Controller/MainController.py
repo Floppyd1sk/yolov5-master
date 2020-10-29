@@ -27,6 +27,10 @@ def checkDate():
     #dateStr = '06 Oct 2020'
     return dateStr
 
+def checkWeek():
+    now = datetime.date.now()
+    year,week_num,day_of_week = now.isocalendar()
+    return week_num
 
 def checkHour():
     now = datetime.datetime.now()

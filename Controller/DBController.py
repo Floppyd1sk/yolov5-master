@@ -10,6 +10,8 @@ def getLatestHour():
 def getLatestCarAmount():
     return dbCon.getLatestCarAmount()
 
+def getLatestWeek():
+    return dbCon.getLatestWeek()
 
 # Tells DBConnection to update the latest row in the database Cars table
 def updateRow():

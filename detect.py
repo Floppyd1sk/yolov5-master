@@ -23,6 +23,8 @@ from utils.general import (
     xyxy2xywh, plot_one_box, strip_optimizer, set_logging)
 from utils.torch_utils import select_device, load_classifier, time_synchronized
 
+totalCarAmounttwo = MainController.getLatestCarAmount()
+
 def generateCentroid(rects):
     inputCentroids = np.zeros((len(rects), 2), dtype="int")
     for (i, (startX, startY, endX, endY)) in enumerate(rects):
@@ -32,7 +34,7 @@ def generateCentroid(rects):
     return inputCentroids
 
 #Simon
-def detect(save_img):
+def detect(save_img, totalCarAmounttwo):
     out, source, weights, view_img, save_txt, imgsz = \
         opt.output, opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size
     webcam = source.isnumeric() or source.startswith(('rtsp://', 'rtmp://', 'http://')) or source.endswith('.txt')
@@ -44,6 +46,7 @@ def detect(save_img):
     if os.path.exists(out):
         shutil.rmtree(out)  # delete output folder
     os.makedirs(out)  # make new output folder
+    start = time.time()
     half = device.type != 'cpu'  # half precision only supported on CUDA
 
     # Load model
@@ -90,12 +93,16 @@ def detect(save_img):
     totalUpBus = 0
     totalUpTruck = 0
     trackableObjects = {}
-    totalCarAmount = 0
+
+    totalCarAmount = totalCarAmounttwo
     OldCarAmount = 0
+
+
 
     img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
     _ = model(img.half() if half else img) if device.type != 'cpu' else None  # run once
     for path, img, im0s, vid_cap in dataset:
+        elapsed = time.time() - start
         img = torch.from_numpy(img).to(device)
         img = img.half() if half else img.float()  # uint8 to fp16/32
         img /= 255.0  # 0 - 255 to 0.0 - 1.0
@@ -216,11 +223,16 @@ def detect(save_img):
                                     to.counted = True
 
                             OldCarAmount = totalCarAmount
-                            totalCarAmount = totalDownCar + totalDownBus + totalDownTruck + totalDownMotor + \
+                            combinedAmount = totalDownCar + totalDownBus + totalDownTruck + totalDownMotor + \
                             totalUpBus + totalUpCar + totalUpMotor + totalUpTruck
 
-                            if not OldCarAmount == totalCarAmount:
-                                dbInsOrUpd(totalCarAmount)
+
+                            if totalCarAmount != combinedAmount:
+                                totalCarAmount += combinedAmount
+
+                        if not OldCarAmount == totalCarAmount:
+                            dbInsOrUpd(totalCarAmount)
+
 
                     trackableObjects[objectID] = to
 
@@ -244,33 +256,33 @@ def detect(save_img):
                 cv2.putText(im0, 'Total Car Amount : ' + str(totalCarAmount), (int(width * 0.02), int(height * 0.4)),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 3)
                 # print(elapsed)
-                if (elapsed > 60):
-                    objCountUp = []
-                    objCountDown = []
-                    objCountDown.append(totalDownCar)
-                    objCountDown.append(totalDownMotor)
-                    objCountDown.append(totalDownBus)
-                    objCountDown.append(totalDownTruck)
+                #if (elapsed > 60):
+                    #objCountUp = []
+                    #objCountDown = []
+                    #objCountDown.append(totalDownCar)
+                    #objCountDown.append(totalDownMotor)
+                    #objCountDown.append(totalDownBus)
+                    #objCountDown.append(totalDownTruck)
 
-                    objCountUp.append(totalUpCar)
-                    objCountUp.append(totalUpMotor)
-                    objCountUp.append(totalUpBus)
-                    objCountUp.append(totalUpTruck)
+                    #objCountUp.append(totalUpCar)
+                    #objCountUp.append(totalUpMotor)
+                    #objCountUp.append(totalUpBus)
+                    #objCountUp.append(totalUpTruck)
 
-                    date = datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
+                    #date = datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
 
-                    totalDownCar = 0
-                    totalDownMotor = 0
-                    totalDownBus = 0
-                    totalDownTruck = 0
+                    #totalDownCar = 0
+                    #totalDownMotor = 0
+                    #totalDownBus = 0
+                    #totalDownTruck = 0
 
-                    totalUpCar = 0
-                    totalUpMotor = 0
-                    totalUpBus = 0
-                    totalUpTruck = 0
+                    #totalUpCar = 0
+                    #totalUpMotor = 0
+                    #totalUpBus = 0
+                    #totalUpTruck = 0
 
-                    elapsed = 0
-                    start = time.time()
+                    #elapsed = 0
+                    #start = time.time()
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
@@ -333,4 +345,4 @@ if __name__ == '__main__':
                 detect()
                 strip_optimizer(opt.weights)
         else:
-            detect(False)
+            detect(False, totalCarAmounttwo)

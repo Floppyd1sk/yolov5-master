@@ -42,6 +42,12 @@ def getLatestCarAmount():
     else:
         return 0
 
+def getLatestWeek():
+    cn = pyodbc.connect(connString)
+    cursor = cn.cursor()
+    cursor.execute('SELECT WeekNumber FROM Dates WHERE DateId=(SELECT max(DateId) FROM Dates)')
+    for row in cursor:
+        return row[0]
 
 def getLatestDate():
     cn = pyodbc.connect(connString)
@@ -106,17 +112,22 @@ def insertRow(number, check):
         dateStr = now.strftime("%d %b %Y ")
         #dateStr = '06 Oct 2020'
         hourStr = now.strftime("%H")
+        print(hourStr)
         #hourStr = '20'                     # Uncomment this to test new day
+        year, week_num, day_of_week = now.isocalendar()
+
 
         if hourStr == '00' or IsDatesEmpty() == 0 or not dateStr == getLatestDate():  # Checks if Hour is '00', if the Dates table is empty or if it's a new date.
             # If either is true, then it runs the commit
-            sql1 = "INSERT INTO Dates(CurrentDate) VALUES ('%s') " % dateStr
+            sql1 = "INSERT INTO Dates(CurrentDate, WeekNumber) VALUES ('%s', '%s' ) " % (dateStr, week_num)
             cursor1 = cn.execute(sql1)
             cn.commit()
 
         latestDateId = getLatestDateId()
         sql2 = "INSERT INTO Cars(DateId,HourId,CarAmount) VALUES ('%s','%s',%d) " % (latestDateId, hourStr, number)
         cursor2 = cn.execute(sql2)
+
+
         cn.commit()
 
     except Exception as e:
