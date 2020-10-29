@@ -3,12 +3,16 @@ import os
 import platform
 import shutil
 import time
+from datetime import datetime
 from pathlib import Path
 
 import cv2
 import torch
 import torch.backends.cudnn as cudnn
-from numpy import random
+import numpy as np
+
+from pyimagesearch.centroidtracker import CentroidTracker
+from pyimagesearch.trackableobject import TrackableObject
 
 from models.experimental import attempt_load
 from utils.datasets import LoadStreams, LoadImages
@@ -17,30 +21,23 @@ from utils.general import (
     xyxy2xywh, plot_one_box, strip_optimizer, set_logging)
 from utils.torch_utils import select_device, load_classifier, time_synchronized
 
-global offset
-offset = 5
-global pos_line
-pos_line = 550
-global downwards
-downwards = []
-global carAmount
-carAmount = 0
-global oldCarAmount
-oldCarAmount = 0
-global upwards
-upwards = []
-global carAmounttwo
-carAmounttwo = 0
+def generateCentroid(rects):
+    inputCentroids = np.zeros((len(rects), 2), dtype="int")
+    for (i, (startX, startY, endX, endY)) in enumerate(rects):
+        cX = int((startX + endX) / 2.0)
+        cY = int((startY + endY) / 2.0)
+        inputCentroids[i] = (cX, cY)
+    return inputCentroids
 
-def detect(save_img, carAmount, carAmounttwo):
+
+def detect(save_img):
     out, source, weights, view_img, save_txt, imgsz = \
         opt.output, opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size
     webcam = source.isnumeric() or source.startswith(('rtsp://', 'rtmp://', 'http://')) or source.endswith('.txt')
 
-
-
     # Initialize
     set_logging()
+    elapsed = 0
     device = select_device(opt.device)
     if os.path.exists(out):
         shutil.rmtree(out)  # delete output folder
@@ -71,14 +68,26 @@ def detect(save_img, carAmount, carAmounttwo):
         save_img = True
         dataset = LoadImages(source, img_size=imgsz)
 
-
     # Get names and colors
     names = model.module.names if hasattr(model, 'module') else model.names
-    colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
+    #colors = [[np.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
 
     # Run inference
 
     t0 = time.time()
+    ct = CentroidTracker()
+    listDet = ['car', 'motorcycle', 'bus', 'truck']
+
+    totalDownCar = 0
+    totalDownMotor = 0
+    totalDownBus = 0
+    totalDownTruck = 0
+
+    totalUpCar = 0
+    totalUpMotor = 0
+    totalUpBus = 0
+    totalUpTruck = 0
+    trackableObjects = {}
     img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
     _ = model(img.half() if half else img) if device.type != 'cpu' else None  # run once
     for path, img, im0s, vid_cap in dataset:
@@ -96,11 +105,13 @@ def detect(save_img, carAmount, carAmounttwo):
         pred = non_max_suppression(pred, opt.conf_thres, opt.iou_thres, classes=opt.classes, agnostic=opt.agnostic_nms)
         t2 = time_synchronized()
 
-
         # Apply Classifier
         if classify:
             pred = apply_classifier(pred, modelc, img, im0s)
 
+        rects = []
+        labelObj = []
+        arrCentroid = []
         # Process detections
         for i, det in enumerate(pred):  # detections per image
             if webcam:  # batch_size >= 1
@@ -108,11 +119,10 @@ def detect(save_img, carAmount, carAmounttwo):
             else:
                 p, s, im0 = path, '', im0s
 
-            cv2.line(im0, (25, 400), (600, 400), (255, 127, 0), 3)
-            cv2.line(im0, (650, 400), (1200, 400), (255, 127, 0), 3)
+            height, width, channels = im0.shape
+            cv2.line(im0, (0, int(height / 1.5)), (int(width / 2.3), int(height / 1.5)), (255, 0, 0), thickness=3)
+            #cv2.line(im0, (int(width / 1.8), int(height / 1.5)), (int(width), int(height / 1.5)), (255, 127, 0), thickness=3)
 
-            cv2.putText(im0, "CAR COUNT : " + str(carAmount), (50, 70), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 5)
-            cv2.putText(im0, "CAR COUNTTWO : " + str(carAmounttwo), (600, 70), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 5)
             save_path = str(Path(out) / Path(p).name)
             txt_path = str(Path(out) / Path(p).stem) + ('_%g' % dataset.frame if dataset.mode == 'video' else '')
             s += '%gx%g ' % img.shape[2:]  # print string
@@ -128,44 +138,124 @@ def detect(save_img, carAmount, carAmounttwo):
 
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
-                    #print(xyxy)
+                    label = '%s %.2f' % (names[int(cls)], conf)
+                    # print(xyxy)
+                    x = xyxy
+                    tl = None or round(0.002 * (im0.shape[0] + im0.shape[1]) / 2) + 1  # line/font thickness
+                    c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
+                    label1 = label.split(' ')
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
                         with open(txt_path + '.txt', 'a') as f:
                             f.write(('%g ' * 5 + '\n') % (cls, *xywh))  # label format
 
+                    if label1[0] in listDet:
+                        cv2.rectangle(im0, c1, c2, (0, 0, 0), thickness=tl, lineType=cv2.LINE_AA)
+                        box = (int(x[0]), int(x[1]), int(x[2]), int(x[3]))
+                        rects.append(box)
+                        labelObj.append(label1[0])
+                        tf = max(tl - 1, 1)
+                        t_size = cv2.getTextSize(label, 0, fontScale=tl / 3, thickness=tf)[0]
+                        c2 = c1[0] + t_size[0], c1[1] - t_size[1] - 3
+                        cv2.rectangle(im0, c1, c2, (0, 100, 0), -1, cv2.LINE_AA)
+                        cv2.putText(im0, label, (c1[0], c1[1] - 2), 0, tl / 3, [225, 255, 255], thickness=tf,
+                                    lineType=cv2.LINE_AA)
 
-                    if save_img or view_img:  # Add bbox to image
-                        label = '%s %.2f' % (names[int(cls)], conf)
-                        center = plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
-                        downwards.append(center)
-                        #if (center[0] > 25 and center[0] < 625):
+                detCentroid = generateCentroid(rects)
+                objects = ct.update(rects)
 
-                        #    downwards.append(center)
-                            #print('liste1', notdetect)
-                        #if (center[0] > 650 and center[0] < 1200):
+                for (objectID, centroid) in objects.items():
+                    arrCentroid.append(centroid[1])
+                for (objectID, centroid) in objects.items():
+                    # print(idxDict)
+                    to = trackableObjects.get(objectID, None)
+                    if to is None:
+                        to = TrackableObject(objectID, centroid)
+                    else:
+                        y = [c[1] for c in to.centroids]
+                        direction = centroid[1] - np.mean(y)
+                        to.centroids.append(centroid)
+                        if not to.counted:  # arah up
 
-                        #    upwards.append(center)
-                            #print('liste2', notnotdetect)
+                            if direction < 0 and centroid[1] < height / 1.5 and centroid[
+                                1] > height / 1.7:  ##up truble when at distant car counted twice because bbox reappear
+                                idx = detCentroid.tolist().index(centroid.tolist())
+                                if (labelObj[idx] == 'car'):
+                                    totalUpCar += 1
+                                    to.counted = True
+                                elif (labelObj[idx] == 'motorbike'):
+                                    totalUpMotor += 1
+                                    to.counted = True
+                                elif (labelObj[idx] == 'bus'):
+                                    totalUpBus += 1
+                                    to.counted = True
+                                elif (labelObj[idx] == 'truck'):
+                                    totalUpTruck += 1
+                                    to.counted = True
 
-            for (x, y) in downwards:
+                            elif direction > 0 and centroid[1] > height / 1.5:  # arah down
+                                idx = detCentroid.tolist().index(centroid.tolist())
+                                if (labelObj[idx] == 'car'):
+                                    totalDownCar += 1
+                                    to.counted = True
+                                elif (labelObj[idx] == 'motorbike'):
+                                    totalDownMotor += 1
+                                    to.counted = True
+                                elif (labelObj[idx] == 'bus'):
+                                    totalDownBus += 1
+                                    to.counted = True
+                                elif (labelObj[idx] == 'truck'):
+                                    totalDownTruck += 1
+                                    to.counted = True
 
-                if x > 25 and x < 625 and y < (600 + offset) and y > (600 - offset):
+                    trackableObjects[objectID] = to
 
-                    carAmount += 1
-                    downwards.remove((x, y))
-                if x > 625 and x < 1200 and y < (600 + offset) and y > (600 - offset):
+                cv2.putText(im0, 'Down car : ' + str(totalDownCar), (int(width * 0.7), int(height * 0.15)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
+                cv2.putText(im0, 'Down motorbike : ' + str(totalDownMotor), (int(width * 0.7), int(height * 0.2)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
+                cv2.putText(im0, 'Down bus : ' + str(totalDownBus), (int(width * 0.7), int(height * 0.25)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
+                cv2.putText(im0, 'Down truck : ' + str(totalDownTruck), (int(width * 0.7), int(height * 0.3)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
 
-                    carAmounttwo += 1
-                    downwards.remove((x, y))
+                cv2.putText(im0, 'Up car : ' + str(totalUpCar), (int(width * 0.02), int(height * 0.15)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
+                cv2.putText(im0, 'Up motorbike : ' + str(totalUpMotor), (int(width * 0.02), int(height * 0.2)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
+                cv2.putText(im0, 'Up bus : ' + str(totalUpBus), (int(width * 0.02), int(height * 0.25)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
+                cv2.putText(im0, 'Up truck : ' + str(totalUpTruck), (int(width * 0.02), int(height * 0.3)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
+                # print(elapsed)
+                if (elapsed > 60):
+                    ObjListku = ['car', 'motorbike', 'bus', 'truck']
+                    objCountUp = []
+                    objCountDown = []
+                    objCountDown.append(totalDownCar)
+                    objCountDown.append(totalDownMotor)
+                    objCountDown.append(totalDownBus)
+                    objCountDown.append(totalDownTruck)
 
-           # for (x, y) in upwards:
+                    objCountUp.append(totalUpCar)
+                    objCountUp.append(totalUpMotor)
+                    objCountUp.append(totalUpBus)
+                    objCountUp.append(totalUpTruck)
 
-            #    if y < (600 + offset) and y > (600 - offset):
+                    date = datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
 
-            #        carAmounttwo += 1
-             #       upwards.remove((x, y))
+                    totalDownCar = 0
+                    totalDownMotor = 0
+                    totalDownBus = 0
+                    totalDownTruck = 0
 
+                    totalUpCar = 0
+                    totalUpMotor = 0
+                    totalUpBus = 0
+                    totalUpTruck = 0
+
+                    elapsed = 0
+                    start = time.time()
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
@@ -201,11 +291,11 @@ def detect(save_img, carAmount, carAmounttwo):
     print('Done. (%.3fs)' % (time.time() - t0))
 
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str, default='yolov5s.pt', help='model.pt path(s)')
-    parser.add_argument('--source', type=str, default='inference/videos/video2.mp4', help='source')  # file/folder, 0 for webcam
+    parser.add_argument('--source', type=str, default='inference/videos/test2.mp4', help='source')  # file/folder, 0 for webcam
+    # parser.add_argument('--source', type=str, default='0', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--output', type=str, default='inference/output', help='output folder')  # output folder
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.4, help='object confidence threshold')
@@ -226,4 +316,4 @@ if __name__ == '__main__':
                 detect()
                 strip_optimizer(opt.weights)
         else:
-            detect(False, carAmount, carAmounttwo)
+            detect(False)

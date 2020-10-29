@@ -57,19 +57,6 @@ def init_seeds(seed=0):
     np.random.seed(seed)
     init_torch_seeds(seed)
 
-def get_center(x, y, w, h):
-    #print('x',x)
-    #print('y',y)
-    #print('w',w)
-    #print('h',h)
-    x1 = int(w / 2)
-    y1 = int(h / 2)
-    cx = x + x1
-    cy = y + y1
-    #cx = int((x+w)/2)
-    #cy = int((y+h)/2)
-    return cx, cy
-
 def get_latest_run(search_dir='./runs'):
     # Return path to most recent 'last.pt' in /runs (i.e. to --resume from)
     last_list = glob.glob(f'{search_dir}/**/last*.pt', recursive=True)
@@ -992,10 +979,10 @@ def plot_one_box(x, img, color=None, label=None, line_thickness=None):
     c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
     #print(c1)
     #print(c2)
-    cv2.rectangle(img, c1, c2, color, thickness=tl, lineType=cv2.LINE_AA)
-    center = get_center(x[0], x[1], x[2], x[3])
+    rectangle = cv2.rectangle(img, c1, c2, color, thickness=tl, lineType=cv2.LINE_AA)
+    #center = get_center(x[0], x[1], x[2], x[3])
 
-    return center
+    return rectangle
     #if label:
     #    tf = max(tl - 1, 1)  # font thickness
     #    t_size = cv2.getTextSize(label, 0, fontScale=tl / 3, thickness=tf)[0]
