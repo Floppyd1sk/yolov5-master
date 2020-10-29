@@ -23,7 +23,7 @@ from utils.general import (
     xyxy2xywh, plot_one_box, strip_optimizer, set_logging)
 from utils.torch_utils import select_device, load_classifier, time_synchronized
 
-totalCarAmounttwo = MainController.getLatestCarAmount()
+
 
 def generateCentroid(rects):
     inputCentroids = np.zeros((len(rects), 2), dtype="int")
@@ -34,13 +34,19 @@ def generateCentroid(rects):
     return inputCentroids
 
 #Simon
-def detect(save_img, totalCarAmounttwo):
+def detect(save_img):
     out, source, weights, view_img, save_txt, imgsz = \
         opt.output, opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size
     webcam = source.isnumeric() or source.startswith(('rtsp://', 'rtmp://', 'http://')) or source.endswith('.txt')
 
     # Initialize
     set_logging()
+    totalCarAmount = MainController.getLatestCarAmount()
+    oldCombinedAmount = 0
+    combinedAmount = 0
+    tempAmount = 0
+
+
     elapsed = 0
     device = select_device(opt.device)
     if os.path.exists(out):
@@ -94,8 +100,8 @@ def detect(save_img, totalCarAmounttwo):
     totalUpTruck = 0
     trackableObjects = {}
 
-    totalCarAmount = totalCarAmounttwo
-    OldCarAmount = 0
+
+
 
 
 
@@ -222,19 +228,25 @@ def detect(save_img, totalCarAmounttwo):
                                     totalDownTruck += 1
                                     to.counted = True
 
-                            OldCarAmount = totalCarAmount
-                            combinedAmount = totalDownCar + totalDownBus + totalDownTruck + totalDownMotor + \
-                            totalUpBus + totalUpCar + totalUpMotor + totalUpTruck
 
 
-                            if totalCarAmount != combinedAmount:
-                                totalCarAmount += combinedAmount
-
-                        if not OldCarAmount == totalCarAmount:
-                            dbInsOrUpd(totalCarAmount)
 
 
                     trackableObjects[objectID] = to
+
+                oldCarAmount = totalCarAmount
+
+                combinedAmount = totalDownCar + totalDownBus + totalDownTruck + totalDownMotor + \
+                                     totalUpBus + totalUpCar + totalUpMotor + totalUpTruck
+                if not oldCombinedAmount == combinedAmount:
+                    tempAmount = totalCarAmount + combinedAmount
+                    oldCombinedAmount = combinedAmount
+
+                if oldCarAmount < tempAmount:
+                    totalCarAmount = tempAmount
+
+                if not oldCarAmount == totalCarAmount:
+                    dbInsOrUpd(totalCarAmount)
 
                 cv2.putText(im0, 'Down car : ' + str(totalDownCar), (int(width * 0.7), int(height * 0.15)),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
@@ -253,8 +265,10 @@ def detect(save_img, totalCarAmounttwo):
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
                 cv2.putText(im0, 'Up truck : ' + str(totalUpTruck), (int(width * 0.02), int(height * 0.3)),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
-                cv2.putText(im0, 'Total Car Amount : ' + str(totalCarAmount), (int(width * 0.02), int(height * 0.4)),
+                cv2.putText(im0, 'Total Car Amount : ' + str(MainController.getLatestCarAmount()), (int(width * 0.02), int(height * 0.4)),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 3)
+
+
                 # print(elapsed)
                 #if (elapsed > 60):
                     #objCountUp = []
@@ -345,4 +359,4 @@ if __name__ == '__main__':
                 detect()
                 strip_optimizer(opt.weights)
         else:
-            detect(False, totalCarAmounttwo)
+            detect(False)
