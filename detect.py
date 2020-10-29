@@ -11,6 +11,8 @@ import torch
 import torch.backends.cudnn as cudnn
 import numpy as np
 
+from Controller.MainController import dbInsOrUpd
+import Controller.MainController as MainController
 from pyimagesearch.centroidtracker import CentroidTracker
 from pyimagesearch.trackableobject import TrackableObject
 
@@ -88,6 +90,9 @@ def detect(save_img):
     totalUpBus = 0
     totalUpTruck = 0
     trackableObjects = {}
+    totalCarAmount = 0
+    OldCarAmount = 0
+
     img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
     _ = model(img.half() if half else img) if device.type != 'cpu' else None  # run once
     for path, img, im0s, vid_cap in dataset:
@@ -210,6 +215,13 @@ def detect(save_img):
                                     totalDownTruck += 1
                                     to.counted = True
 
+                            OldCarAmount = totalCarAmount
+                            totalCarAmount = totalDownCar + totalDownBus + totalDownTruck + totalDownMotor + \
+                            totalUpBus + totalUpCar + totalUpMotor + totalUpTruck
+
+                            if not OldCarAmount == totalCarAmount:
+                                dbInsOrUpd(totalCarAmount)
+
                     trackableObjects[objectID] = to
 
                 cv2.putText(im0, 'Down car : ' + str(totalDownCar), (int(width * 0.7), int(height * 0.15)),
@@ -229,6 +241,8 @@ def detect(save_img):
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
                 cv2.putText(im0, 'Up truck : ' + str(totalUpTruck), (int(width * 0.02), int(height * 0.3)),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
+                cv2.putText(im0, 'Total Car Amount : ' + str(totalCarAmount), (int(width * 0.02), int(height * 0.4)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 3)
                 # print(elapsed)
                 if (elapsed > 60):
                     objCountUp = []
@@ -297,7 +311,7 @@ def detect(save_img):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str, default='yolov5s.pt', help='model.pt path(s)')
-    parser.add_argument('--source', type=str, default='inference/videos/test.mp4', help='source')  # file/folder, 0 for webcam
+    parser.add_argument('--source', type=str, default='inference/videos/stor_film_Trim2.mp4', help='source')  # file/folder, 0 for webcam
     #parser.add_argument('--source', type=str, default='0', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--output', type=str, default='inference/output', help='output folder')  # output folder
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
