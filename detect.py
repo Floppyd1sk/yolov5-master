@@ -1,3 +1,4 @@
+# coding=utf-8
 import argparse
 import os
 import platform
@@ -228,10 +229,6 @@ def detect(save_img):
                                     totalDownTruck += 1
                                     to.counted = True
 
-
-
-
-
                     trackableObjects[objectID] = to
 
                 oldCarAmount = totalCarAmount
@@ -248,25 +245,32 @@ def detect(save_img):
                 if not oldCarAmount == totalCarAmount:
                     dbInsOrUpd(totalCarAmount)
 
-                cv2.putText(im0, 'Down car : ' + str(totalDownCar), (int(width * 0.7), int(height * 0.15)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
-                cv2.putText(im0, 'Down motorbike : ' + str(totalDownMotor), (int(width * 0.7), int(height * 0.2)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
-                cv2.putText(im0, 'Down bus : ' + str(totalDownBus), (int(width * 0.7), int(height * 0.25)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
-                cv2.putText(im0, 'Down truck : ' + str(totalDownTruck), (int(width * 0.7), int(height * 0.3)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
+                cv2.putText(im0, 'Frakoerende: ' + str(totalUpCar + totalUpMotor + totalUpBus + totalUpTruck),
+                            (int(width * 0.6), int(height * 0.10)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 4, (50, 255, 255), 3)
+                cv2.putText(im0, 'Bil: ' + str(totalUpCar), (int(width * 0.6), int(height * 0.15)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
+                cv2.putText(im0, 'Motorcykel: ' + str(totalUpMotor), (int(width * 0.6), int(height * 0.2)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
+                cv2.putText(im0, 'Bus: ' + str(totalUpBus), (int(width * 0.6), int(height * 0.25)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
+                cv2.putText(im0, 'Lastbil: ' + str(totalUpTruck), (int(width * 0.6), int(height * 0.3)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
 
-                cv2.putText(im0, 'Up car : ' + str(totalUpCar), (int(width * 0.02), int(height * 0.15)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
-                cv2.putText(im0, 'Up motorbike : ' + str(totalUpMotor), (int(width * 0.02), int(height * 0.2)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
-                cv2.putText(im0, 'Up bus : ' + str(totalUpBus), (int(width * 0.02), int(height * 0.25)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
-                cv2.putText(im0, 'Up truck : ' + str(totalUpTruck), (int(width * 0.02), int(height * 0.3)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 2)
-                cv2.putText(im0, 'Total Car Amount : ' + str(MainController.getLatestCarAmount()), (int(width * 0.02), int(height * 0.4)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 0, 100), 3)
+                cv2.putText(im0, 'Modkoerende: ' + str(totalDownCar + totalDownMotor + totalDownBus + totalDownTruck),
+                            (int(width * 0.02), int(height * 0.10)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 4, (50, 255, 255), 3)
+                cv2.putText(im0, 'Bil: ' + str(totalDownCar), (int(width * 0.02), int(height * 0.15)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
+                cv2.putText(im0, 'Motorcykel: ' + str(totalDownMotor), (int(width * 0.02), int(height * 0.2)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
+                cv2.putText(im0, 'Bus: ' + str(totalDownBus), (int(width * 0.02), int(height * 0.25)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
+                cv2.putText(im0, 'Lastbil: ' + str(totalDownTruck), (int(width * 0.02), int(height * 0.3)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
+                cv2.putText(im0, 'Totale køretøjer: ' + str(MainController.getLatestCarAmount()), (int(width * 0.02),
+                                                                                                   int(height * 0.4)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
 
 
                 # print(elapsed)
@@ -337,7 +341,7 @@ def detect(save_img):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str, default='yolov5s.pt', help='model.pt path(s)')
-    parser.add_argument('--source', type=str, default='inference/videos/stor_film_Trim2.mp4', help='source')  # file/folder, 0 for webcam
+    parser.add_argument('--source', type=str, default='inference/videos/test2.mp4', help='source')  # file/folder, 0 for webcam
     #parser.add_argument('--source', type=str, default='0', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--output', type=str, default='inference/output', help='output folder')  # output folder
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
