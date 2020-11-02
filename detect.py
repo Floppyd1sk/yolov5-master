@@ -135,10 +135,10 @@ def detect(save_img):
         for i, det in enumerate(pred):  # detections per image
             if webcam:  # batch_size >= 1
                 p, s, im0 = path[i], '%g: ' % i, im0s[i].copy()
-                cv2.resize(im0, (2560, 1440))
+                #cv2.resize(im0, (2560, 1440))
             else:
                 p, s, im0 = path, '', im0s
-                cv2.resize(im0, (2560, 1440))
+                #cv2.resize(im0, (2560, 1440))
 
             height, width, channels = im0.shape
             cv2.line(im0, (0, int(height / 1.5)), (int(width), int(height / 1.5)), (255, 0, 0), thickness=3)
@@ -245,32 +245,32 @@ def detect(save_img):
                 if not oldCarAmount == totalCarAmount:
                     dbInsOrUpd(totalCarAmount)
 
-                cv2.putText(im0, 'Frakoerende: ' + str(totalUpCar + totalUpMotor + totalUpBus + totalUpTruck),
+                cv2.putText(im0, 'Frakoerende: ',
                             (int(width * 0.6), int(height * 0.10)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 4, (50, 255, 255), 3)
+                            cv2.FONT_HERSHEY_SIMPLEX, .75, (50, 255, 255), 2)
                 cv2.putText(im0, 'Bil: ' + str(totalUpCar), (int(width * 0.6), int(height * 0.15)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
+                            cv2.FONT_HERSHEY_SIMPLEX, .5, (50, 255, 255), 2)
                 cv2.putText(im0, 'Motorcykel: ' + str(totalUpMotor), (int(width * 0.6), int(height * 0.2)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
+                            cv2.FONT_HERSHEY_SIMPLEX, .5, (50, 255, 255), 2)
                 cv2.putText(im0, 'Bus: ' + str(totalUpBus), (int(width * 0.6), int(height * 0.25)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
+                            cv2.FONT_HERSHEY_SIMPLEX, .5, (50, 255, 255), 2)
                 cv2.putText(im0, 'Lastbil: ' + str(totalUpTruck), (int(width * 0.6), int(height * 0.3)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
+                            cv2.FONT_HERSHEY_SIMPLEX, .5, (50, 255, 255), 2)
 
-                cv2.putText(im0, 'Modkoerende: ' + str(totalDownCar + totalDownMotor + totalDownBus + totalDownTruck),
+                cv2.putText(im0, 'Modkoerende: ',
                             (int(width * 0.02), int(height * 0.10)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 4, (50, 255, 255), 3)
+                            cv2.FONT_HERSHEY_SIMPLEX, .75, (50, 255, 255), 2)
                 cv2.putText(im0, 'Bil: ' + str(totalDownCar), (int(width * 0.02), int(height * 0.15)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
+                            cv2.FONT_HERSHEY_SIMPLEX, .5, (50, 255, 255), 2)
                 cv2.putText(im0, 'Motorcykel: ' + str(totalDownMotor), (int(width * 0.02), int(height * 0.2)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
+                            cv2.FONT_HERSHEY_SIMPLEX, .5, (50, 255, 255), 2)
                 cv2.putText(im0, 'Bus: ' + str(totalDownBus), (int(width * 0.02), int(height * 0.25)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
+                            cv2.FONT_HERSHEY_SIMPLEX, .5, (50, 255, 255), 2)
                 cv2.putText(im0, 'Lastbil: ' + str(totalDownTruck), (int(width * 0.02), int(height * 0.3)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
-                cv2.putText(im0, 'Totale køretøjer: ' + str(MainController.getLatestCarAmount()), (int(width * 0.02),
+                            cv2.FONT_HERSHEY_SIMPLEX, .5, (50, 255, 255), 2)
+                cv2.putText(im0, 'Totale koeretoejer: ' + str(MainController.getLatestCarAmount()), (int(width * 0.02),
                                                                                                    int(height * 0.4)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
+                            cv2.FONT_HERSHEY_SIMPLEX, .5, (50, 255, 255), 2)
 
 
                 # print(elapsed)
@@ -307,8 +307,8 @@ def detect(save_img):
 
             # Stream results
             if view_img:
-                cv2.namedWindow('Main', cv2.WINDOW_NORMAL)
-                cv2.resizeWindow('Main', 2560, 2440)
+                #cv2.namedWindow('Main', cv2.WINDOW_NORMAL)
+                #cv2.resizeWindow('Main', 2560, 2440)
                 cv2.imshow("Main", im0)
 
                 if cv2.waitKey(1) == ord('q'):  # q to quit
@@ -341,8 +341,8 @@ def detect(save_img):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str, default='yolov5s.pt', help='model.pt path(s)')
-    parser.add_argument('--source', type=str, default='inference/videos/test2.mp4', help='source')  # file/folder, 0 for webcam
-    #parser.add_argument('--source', type=str, default='0', help='source')  # file/folder, 0 for webcam
+    #parser.add_argument('--source', type=str, default='inference/videos/test2.mp4', help='source')  # file/folder, 0 for webcam
+    parser.add_argument('--source', type=str, default='0', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--output', type=str, default='inference/output', help='output folder')  # output folder
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.4, help='object confidence threshold')
