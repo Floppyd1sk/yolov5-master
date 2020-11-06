@@ -34,7 +34,7 @@ def generateCentroid(rects):
         inputCentroids[i] = (cX, cY)
     return inputCentroids
 
-#Simon
+##TestSimon
 def detect(save_img):
     out, source, weights, view_img, save_txt, imgsz = \
         opt.output, opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size
