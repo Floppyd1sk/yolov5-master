@@ -79,7 +79,7 @@ def check_img_size(img_size, s=32):
     return new_size
 
 
-def check_anchors(dataset, model, thr=4.0, imgsz=640):
+def check_anchors(dataset, model, thr=4.0, imgsz=1920):
     # Check anchor fit to data, recompute if necessary
     print('\nAnalyzing anchors... ', end='')
     m = model.module.model[-1] if hasattr(model, 'module') else model.model[-1]  # Detect()
@@ -747,7 +747,7 @@ def coco_single_class_labels(path='../coco/labels/train2014/', label_class=43):
             shutil.copyfile(src=img_file, dst='new/images/' + Path(file).name.replace('txt', 'jpg'))  # copy images
 
 
-def kmean_anchors(path='./data/coco128.yaml', n=9, img_size=640, thr=4.0, gen=1000, verbose=True):
+def kmean_anchors(path='./data/coco128.yaml', n=9, img_size=1920, thr=4.0, gen=1000, verbose=True):
     """ Creates kmeans-evolved anchors from training dataset
 
         Arguments:
@@ -1012,7 +1012,7 @@ def plot_wh_methods():  # from utils.general import *; plot_wh_methods()
     fig.savefig('comparison.png', dpi=200)
 
 
-def plot_images(images, targets, paths=None, fname='images.jpg', names=None, max_size=640, max_subplots=16):
+def plot_images(images, targets, paths=None, fname='images.jpg', names=None, max_size=1920, max_subplots=16):
 
     tl = 3  # line thickness
     tf = max(tl - 1, 1)  # font thickness
