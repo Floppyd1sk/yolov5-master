@@ -15,7 +15,7 @@ connString = 'Trusted_Connection=yes;' \
 
 # Gets the latest hour from the database Cars table
 def getLatestHour():
-    cn = pyodbc.connect(connString)
+    cn = pyodbc.connect(connString, autocommit=True)
     cursor = cn.cursor()
     cursor.execute('SELECT HourId FROM Cars WHERE CarId=(SELECT max(CarId) FROM Cars)')
     for row in cursor:
@@ -25,7 +25,7 @@ def getLatestHour():
 
 # Gets the latest Car amount from the database Cars table
 def getLatestCarAmount():
-    cn = pyodbc.connect(connString)
+    cn = pyodbc.connect(connString, autocommit=True)
     cursor = cn.cursor()
     dateId = getLatestDate()
     dateIdStr = str(dateId)
@@ -43,14 +43,14 @@ def getLatestCarAmount():
         return 0
 
 def getLatestWeek():
-    cn = pyodbc.connect(connString)
+    cn = pyodbc.connect(connString, autocommit=True)
     cursor = cn.cursor()
     cursor.execute('SELECT WeekNumber FROM Dates WHERE DateId=(SELECT max(DateId) FROM Dates)')
     for row in cursor:
         return row[0]
 
 def getLatestDate():
-    cn = pyodbc.connect(connString)
+    cn = pyodbc.connect(connString, autocommit=True)
     cursor = cn.cursor()
     cursor.execute('SELECT CurrentDate FROM Dates WHERE DateId=(SELECT max(DateId) FROM Dates)')
     for row in cursor:
@@ -59,7 +59,7 @@ def getLatestDate():
 
 # Gets the latest row from the database Cars table
 def getLatestRow():
-    cn = pyodbc.connect(connString)
+    cn = pyodbc.connect(connString, autocommit=True)
     cursor = cn.cursor()
     cursor.execute('SELECT Max(CarId) FROM Cars')
     for row in cursor:
@@ -68,7 +68,7 @@ def getLatestRow():
 
 # Gets the latest DateId from Dates table
 def getLatestDateId():
-    cn = pyodbc.connect(connString)
+    cn = pyodbc.connect(connString, autocommit=True)
     cursor = cn.cursor()
     cursor.execute('SELECT Max(DateId) FROM Dates')
     for row in cursor:
@@ -77,7 +77,7 @@ def getLatestDateId():
 
 # Checks if the dates table is empty. Returns 1 if it's not empty and 0 if it's empty
 def IsDatesEmpty():
-    cn = pyodbc.connect(connString)
+    cn = pyodbc.connect(connString, autocommit=True)
     cursor = cn.cursor()
     sql = "SELECT count(*) as tot FROM Dates"
     cursor.execute(sql)
@@ -91,7 +91,7 @@ def IsDatesEmpty():
 # Updates the latest row in Cars table
 def updateRow():
     try:
-        cn = pyodbc.connect(connString)
+        cn = pyodbc.connect(connString, autocommit=True)
         latestRow = getLatestRow()
         newNumber = getLatestCarAmount() + 1
         sql = "Update Cars set CarAmount = %s where CarId = %s" % (newNumber, latestRow)
@@ -107,7 +107,7 @@ def updateRow():
 # Inserts a new row into the Cars table
 def insertRow(number, check):
     try:
-        cn = pyodbc.connect(connString)
+        cn = pyodbc.connect(connString, autocommit=True)
         now = datetime.datetime.now()
         dateStr = now.strftime("%d %b %Y ")
         #dateStr = '06 Oct 2020'
