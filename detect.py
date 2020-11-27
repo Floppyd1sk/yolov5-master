@@ -13,6 +13,8 @@ import torch.backends.cudnn as cudnn
 import numpy as np
 
 from Controller.MainController import dbInsOrUpd
+from Controller.MainController import dbInsOrUpdCar
+from Controller.MainController import dbInsOrUpdTruck
 import Controller.MainController as MainController
 from pyimagesearch.centroidtracker import CentroidTracker
 from pyimagesearch.trackableobject import TrackableObject
@@ -41,7 +43,10 @@ def detect(save_img):
 
     # Initialize
     set_logging()
-    totalCarAmount = MainController.getLatestCarAmount()
+    totalCarAmount = MainController.getLatestCarAmount() + MainController.getLatestTruckAmount()
+    totalCars = MainController.getLatestCarAmount()
+    totalTrucks = MainController.getLatestTruckAmount()
+    totalMotors = 0
     displayAmount = totalCarAmount
     oldCombinedAmount = 0
     combinedAmount = 0
@@ -98,12 +103,8 @@ def detect(save_img):
     totalUpCar = 0
     totalUpMotor = 0
     totalUpTruck = 0
+
     trackableObjects = {}
-
-
-
-
-
 
     img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
     _ = model(img.half() if half else img) if device.type != 'cpu' else None  # run once
@@ -150,6 +151,7 @@ def detect(save_img):
                 cv2.putText(im0, 'Totale koeretoejer: ' + str(displayAmount), (int(width * 0.02),
                                                                                int(height * 0.4)),
                             cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
+
 
             #cv2.line(im0, (int(width / 1.8), int(height / 1.5)), (int(width), int(height / 1.5)), (255, 127, 0), thickness=3)
 
@@ -235,9 +237,17 @@ def detect(save_img):
                     trackableObjects[objectID] = to
 
                 oldCarAmount = totalCarAmount
+                oldTotalCars = totalCars
+                oldTotalTrucks = totalTrucks
+                oldTotalMotors = totalMotors
 
                 combinedAmount = totalDownCar + totalDownTruck + totalDownMotor + \
                                      totalUpCar + totalUpMotor + totalUpTruck
+
+                totalCars = totalDownCar + totalUpCar
+                totalTrucks = totalDownTruck + totalUpTruck
+                totalMotors = totalDownMotor + totalUpMotor
+
                 if not oldCombinedAmount == combinedAmount:
                     tempAmount = totalCarAmount + combinedAmount
                     oldCombinedAmount = combinedAmount
@@ -246,8 +256,12 @@ def detect(save_img):
                     totalCarAmount = tempAmount
 
                 if not oldCarAmount == totalCarAmount:
-                    dbInsOrUpd(totalCarAmount)
                     displayAmount += 1
+                    if not oldTotalCars == totalCars:
+                        dbInsOrUpdCar(totalCars)
+
+                    if not oldTotalTrucks == totalTrucks:
+                        dbInsOrUpdTruck(totalTrucks)
 
                 if not control:
                     cv2.putText(im0, 'Frakoerende: ',

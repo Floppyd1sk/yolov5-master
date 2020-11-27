@@ -9,16 +9,19 @@ def getLatestHour():
 def getLatestCarAmount():
     return dbCtr.getLatestCarAmount()
 
+def getLatestTruckAmount():
+    return dbCtr.getLatestTruckAmount()
 
-def updateRow():
-    dbCtr.updateRow()
+
+def updateRow(TableName):
+    dbCtr.updateRow(TableName)
 
 def getLatestDate():
     return dbCtr.getLatestDate()
 
 
-def insertRow(carAmount, check):
-    dbCtr.insertRow(carAmount, check)
+def insertRow(carAmount, check, TableName):
+    dbCtr.insertRow(carAmount, check, TableName)
 
 
 def checkDate():
@@ -50,3 +53,27 @@ def dbInsOrUpd(carAmount):
         insertRow(carAmount, False)
     elif getLatestHour() == checkHour() and getLatestDate() == checkDate():
         updateRow()
+
+def dbInsOrUpdCar(carAmount):
+    if getLatestHour() is None or getLatestDate() is None:
+        insertRow(carAmount, True, "Cars")
+    elif not getLatestHour() == checkHour() and not getLatestDate() == checkDate():
+        carAmount = 0
+        insertRow(carAmount, False, "Cars")
+    elif not getLatestHour() == checkHour() and getLatestDate() == checkDate():
+        carAmount = 0
+        insertRow(carAmount, False, "Cars")
+    elif getLatestHour() == checkHour() and getLatestDate() == checkDate():
+        updateRow("Cars")
+
+def dbInsOrUpdTruck(carAmount):
+    if getLatestHour() is None or getLatestDate() is None:
+        insertRow(carAmount, True, "Trucks")
+    elif not getLatestHour() == checkHour() and not getLatestDate() == checkDate():
+        carAmount = 0
+        insertRow(carAmount, False, "Trucks")
+    elif not getLatestHour() == checkHour() and getLatestDate() == checkDate():
+        carAmount = 0
+        insertRow(carAmount, False, "Trucks")
+    elif getLatestHour() == checkHour() and getLatestDate() == checkDate():
+        updateRow("Trucks")

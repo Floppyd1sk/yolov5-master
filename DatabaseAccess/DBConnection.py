@@ -34,9 +34,28 @@ def getLatestCarAmount():
     now = datetime.datetime.now()
     dateStr = now.strftime("%d %b %Y ")
     hourStr = now.strftime("%H")
-    latestRow = getLatestRow()
+    latestRow = getLatestRowCars()
     if hourIdStr == hourStr and dateIdStr == dateStr:
         cursor.execute('SELECT CarAmount FROM Cars WHERE CarId=%s' % latestRow)
+        for row in cursor:
+            return row[0]
+    else:
+        return 0
+
+# Gets the latest Car amount from the database Cars table
+def getLatestTruckAmount():
+    cn = pyodbc.connect(connString, autocommit=True)
+    cursor = cn.cursor()
+    dateId = getLatestDate()
+    dateIdStr = str(dateId)
+    hourId = getLatestHour()
+    hourIdStr = str(hourId)
+    now = datetime.datetime.now()
+    dateStr = now.strftime("%d %b %Y ")
+    hourStr = now.strftime("%H")
+    latestRow = getLatestRowTrucks()
+    if hourIdStr == hourStr and dateIdStr == dateStr:
+        cursor.execute('SELECT TruckAmount FROM Trucks WHERE TruckId=%s' % latestRow)
         for row in cursor:
             return row[0]
     else:
@@ -58,10 +77,17 @@ def getLatestDate():
 
 
 # Gets the latest row from the database Cars table
-def getLatestRow():
+def getLatestRowCars():
     cn = pyodbc.connect(connString, autocommit=True)
     cursor = cn.cursor()
     cursor.execute('SELECT Max(CarId) FROM Cars')
+    for row in cursor:
+        return row[0]
+
+def getLatestRowTrucks():
+    cn = pyodbc.connect(connString, autocommit=True)
+    cursor = cn.cursor()
+    cursor.execute('SELECT Max(TruckId) FROM Trucks')
     for row in cursor:
         return row[0]
 
@@ -89,12 +115,17 @@ def IsDatesEmpty():
         return 0
 
 # Updates the latest row in Cars table
-def updateRow():
+def updateRow(TableName):
     try:
         cn = pyodbc.connect(connString, autocommit=True)
-        latestRow = getLatestRow()
-        newNumber = getLatestCarAmount() + 1
-        sql = "Update Cars set CarAmount = %s where CarId = %s" % (newNumber, latestRow)
+        if TableName == "Cars":
+            latestRow = getLatestRowCars()
+            newNumber = getLatestCarAmount() + 1
+            sql = "Update Cars set CarAmount = %s where CarId = %s" % (newNumber, latestRow)
+        elif TableName == "Trucks":
+            latestRow = getLatestRowTrucks()
+            newNumber = getLatestTruckAmount() + 1
+            sql = "Update Trucks set TruckAmount = %s where TruckId = %s" % (newNumber, latestRow)
         cursor = cn.execute(sql)
         cn.commit()
     except Exception as e:
@@ -102,10 +133,10 @@ def updateRow():
 
     finally:
         cn.close()
-        print("Updated CarId: " + str(latestRow) + " to Amount: " + str(newNumber))
+        print("Updated " + TableName + "Id: " + str(latestRow) + " to Amount: " + str(newNumber))
 
 # Inserts a new row into the Cars table
-def insertRow(number, check):
+def insertRow(number, check, TableName):
     try:
         cn = pyodbc.connect(connString, autocommit=True)
         now = datetime.datetime.now()
@@ -124,7 +155,10 @@ def insertRow(number, check):
             cn.commit()
 
         latestDateId = getLatestDateId()
-        sql2 = "INSERT INTO Cars(DateId,HourId,CarAmount) VALUES ('%s','%s',%d) " % (latestDateId, hourStr, number)
+        if TableName == "Cars":
+            sql2 = "INSERT INTO Cars(DateId,HourId,CarAmount) VALUES ('%s','%s',%d) " % (latestDateId, hourStr, number)
+        elif TableName == "Trucks":
+            sql2 = "INSERT INTO Trucks(DateId,HourId,TruckAmount) VALUES ('%s','%s',%d) " % (latestDateId, hourStr, number)
         cursor2 = cn.execute(sql2)
 
 
