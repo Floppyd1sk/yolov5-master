@@ -44,12 +44,18 @@ def detect(save_img):
 
     # Initialize
     set_logging()
-    totalCarAmount = MainController.getLatestVehicleAmount('cars', 'carId') + MainController.getLatestVehicleAmount \
-        ('trucks', 'truckId')
-    totalCars = MainController.getLatestVehicleAmount('cars', 'carId')
-    totalTrucks = MainController.getLatestVehicleAmount('trucks', 'truckId')
-    totalMotors = 0
-    displayAmount = totalCarAmount
+    cars = MainController.getLatestVehicleAmount('cars', 'carId')
+    motors = MainController.getLatestVehicleAmount('motorcycles', 'motorcycleId')
+    trucks = MainController.getLatestVehicleAmount('trucks', 'truckId')
+
+    totalCarAmount = cars + motors + trucks
+    totalCars = cars
+    totalTrucks = trucks
+    totalMotors = motors
+    displayTotalAmount = totalCarAmount
+    displayCarAmount = totalCars
+    displayTruckAmount = totalTrucks
+    displayMotorAmount = totalMotors
     oldCombinedAmount = 0
     combinedAmount = 0
     tempAmount = 0
@@ -147,17 +153,17 @@ def detect(save_img):
             cv2.line(im0, (0, int(height / 1.5)), (int(width), int(height / 1.5)), (255, 0, 0), thickness=3)
 
             if not control:
-                cv2.putText(im0, 'Totale koeretoejer: ' + str(displayAmount), (int(width * 0.02),
+                cv2.putText(im0, 'Totale koeretoejer: ' + str(displayTotalAmount), (int(width * 0.02),
                                                                                int(height * 0.5)),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (50, 255, 255), 2)
-                cv2.putText(im0, 'Bil: ' + str(totalCars), (int(width * 0.02), int(height * 0.55)),
+                cv2.putText(im0, 'Bil: ' + str(displayCarAmount), (int(width * 0.02), int(height * 0.55)),
                             cv2.FONT_HERSHEY_SIMPLEX, .75, (50, 255, 255), 2)
-                cv2.putText(im0, 'Motorcykel: ' + str(totalMotors), (int(width * 0.02), int(height * 0.60)),
+                cv2.putText(im0, 'Motorcykel: ' + str(displayMotorAmount), (int(width * 0.02), int(height * 0.60)),
                             cv2.FONT_HERSHEY_SIMPLEX, .75, (50, 255, 255), 2)
-                cv2.putText(im0, 'Lastbil: ' + str(totalTrucks), (int(width * 0.02), int(height * 0.65)),
+                cv2.putText(im0, 'Lastbil: ' + str(displayTruckAmount), (int(width * 0.02), int(height * 0.65)),
                             cv2.FONT_HERSHEY_SIMPLEX, .75, (50, 255, 255), 2)
             else:
-                cv2.putText(im0, 'Totale koeretoejer: ' + str(displayAmount), (int(width * 0.02),
+                cv2.putText(im0, 'Totale koeretoejer: ' + str(displayTotalAmount), (int(width * 0.02),
                                                                                int(height * 0.5)),
                             cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
 
@@ -265,15 +271,19 @@ def detect(save_img):
                     totalCarAmount = tempAmount
 
                 if not oldCarAmount == totalCarAmount:
-                    displayAmount += 1
+                    displayTotalAmount += 1
+
                     if not oldTotalCars == totalCars:
                         dbInsOrUpdCar(totalCars)
+                        displayCarAmount += 1
 
                     if not oldTotalTrucks == totalTrucks:
                         dbInsOrUpdTruck(totalTrucks)
+                        displayTruckAmount += 1
 
                     if not oldTotalMotors == totalMotors:
                         dbInsOrUpdMotorcycle(totalMotors)
+                        displayMotorAmount += 1
 
                 if not control:
                     cv2.putText(im0, 'Frakoerende: ',
@@ -355,7 +365,7 @@ def detect(save_img):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str, default='yolov5s.pt', help='model.pt path(s)')
-    parser.add_argument('--source', type=str, default='inference/videos/test2.mp4', help='source')  # file/folder, 0 for webcam
+    parser.add_argument('--source', type=str, default='inference/videos/test_trim.mp4', help='source')  # file/folder, 0 for webcam
     #parser.add_argument('--source', type=str, default='0', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--output', type=str, default='inference/output', help='output folder')  # output folder
     parser.add_argument('--img-size', type=int, default=1920, help='inference size (pixels)')
