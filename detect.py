@@ -43,7 +43,7 @@ def detect(save_img):
 
     # Initialize
     set_logging()
-    totalCarAmount = MainController.getLatestCarAmount() + MainController.getLatestTruckAmount()
+    totalCarAmount = MainController.getLatestVehicleAmount() + MainController.getLatestTruckAmount()
     totalCars = MainController.getLatestCarAmount()
     totalTrucks = MainController.getLatestTruckAmount()
     totalMotors = 0

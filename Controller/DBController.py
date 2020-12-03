@@ -5,20 +5,16 @@ from DatabaseAccess import DBConnection as dbCon
 def getLatestHour():
     return dbCon.getLatestHour()
 
-
 # Get the lastest Car amount from the database Cars table
-def getLatestCarAmount():
-    return dbCon.getLatestCarAmount()
-
-def getLatestTruckAmount():
-    return dbCon.getLatestTruckAmount()
+def getLatestVehicleAmount():
+    return dbCon.getLatestVehicleAmount()
 
 def getLatestWeek():
     return dbCon.getLatestWeek()
 
 # Tells DBConnection to update the latest row in the database Cars table
-def updateRow(TableName):
-    dbCon.updateRow(TableName)
+def updateRow(TableName, Id):
+    dbCon.updateRow(TableName, Id)
 
 def getLatestDate():
     return dbCon.getLatestDate()
