@@ -30,12 +30,12 @@ def getLatestVehicleAmount(TableName, Id):
     cursor = cn.cursor()
     dateId = getLatestDate()
     dateIdStr = str(dateId)
-    hourId = getLatestHour()
+    hourId = getLatestHour(TableName, Id)
     hourIdStr = str(hourId)
     now = datetime.datetime.now()
     dateStr = now.strftime("%d %b %Y ")
     hourStr = now.strftime("%H")
-    latestRow = getLatestRow()
+    latestRow = getLatestRow(TableName, Id)
     if hourIdStr == hourStr and dateIdStr == dateStr:
         sql = 'SELECT Amount FROM %s WHERE %s = %s' % (TableName, Id, latestRow)
         cursor.execute(sql)
@@ -63,7 +63,7 @@ def getLatestDate():
 def getLatestRow(TableName, Id):
     cn = pyodbc.connect(connString, autocommit=True)
     cursor = cn.cursor()
-    sql = 'SELECT Max(%s) FROM %s' % (TableName, Id)
+    sql = 'SELECT Max(%s) FROM %s' % (Id, TableName)
     cursor.execute(sql)
     for row in cursor:
         return row[0]
@@ -96,7 +96,7 @@ def updateRow(TableName, Id):
         cn = pyodbc.connect(connString, autocommit=True)
         latestRow = getLatestRow(TableName, Id)
         newNumber = getLatestVehicleAmount(TableName, Id) + 1
-        sql = "Update %s set CarAmount = %s where %s = %s" % (TableName, newNumber, Id, latestRow)
+        sql = "Update %s set Amount = %s where %s = %s" % (TableName, newNumber, Id, latestRow)
         cursor = cn.execute(sql)
         cn.commit()
     except Exception as e:
@@ -126,8 +126,9 @@ def insertRow(number, check, TableName):
             cn.commit()
 
         latestDateId = getLatestDateId()
-        sql2 = "INSERT INTO %s(DateId,HourId,%s) VALUES ('%s','%s',%d) " % (TableName, latestDateId, hourStr, number)
-
+        sql2 = "INSERT INTO %s(DateId,HourId, Amount) VALUES ('%s','%s',%d) " % (TableName, latestDateId, hourStr,
+                                                                                 number)
+        cursor2 = cn.execute(sql2)
         cn.commit()
 
     except Exception as e:

@@ -1,4 +1,3 @@
-# coding=utf-8
 import argparse
 import os
 import platform
@@ -7,14 +6,16 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+
+
 import cv2
 import torch
 import torch.backends.cudnn as cudnn
 import numpy as np
 
-from Controller.MainController import dbInsOrUpd
 from Controller.MainController import dbInsOrUpdCar
 from Controller.MainController import dbInsOrUpdTruck
+from Controller.MainController import dbInsOrUpdMotorcycle
 import Controller.MainController as MainController
 from pyimagesearch.centroidtracker import CentroidTracker
 from pyimagesearch.trackableobject import TrackableObject
@@ -27,7 +28,6 @@ from utils.general import (
 from utils.torch_utils import select_device, load_classifier, time_synchronized
 
 
-
 def generateCentroid(rects):
     inputCentroids = np.zeros((len(rects), 2), dtype="int")
     for (i, (startX, startY, endX, endY)) in enumerate(rects):
@@ -36,6 +36,7 @@ def generateCentroid(rects):
         inputCentroids[i] = (cX, cY)
     return inputCentroids
 
+
 def detect(save_img):
     out, source, weights, view_img, save_txt, imgsz = \
         opt.output, opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size
@@ -43,16 +44,18 @@ def detect(save_img):
 
     # Initialize
     set_logging()
-    totalCarAmount = MainController.getLatestVehicleAmount() + MainController.getLatestTruckAmount()
-    totalCars = MainController.getLatestCarAmount()
-    totalTrucks = MainController.getLatestTruckAmount()
+    totalCarAmount = MainController.getLatestVehicleAmount('cars', 'carId') + MainController.getLatestVehicleAmount \
+        ('trucks', 'truckId')
+    totalCars = MainController.getLatestVehicleAmount('cars', 'carId')
+    totalTrucks = MainController.getLatestVehicleAmount('trucks', 'truckId')
     totalMotors = 0
     displayAmount = totalCarAmount
     oldCombinedAmount = 0
     combinedAmount = 0
     tempAmount = 0
-    control = False
 
+    # Video = False, Webcam = True
+    control = False
 
     elapsed = 0
     device = select_device(opt.device)
@@ -88,7 +91,7 @@ def detect(save_img):
 
     # Get names and colors
     names = model.module.names if hasattr(model, 'module') else model.names
-    #colors = [[np.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
+    # colors = [[np.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
 
     # Run inference
 
@@ -135,25 +138,31 @@ def detect(save_img):
         for i, det in enumerate(pred):  # detections per image
             if webcam:  # batch_size >= 1
                 p, s, im0 = path[i], '%g: ' % i, im0s[i].copy()
-                #cv2.resize(im0, (2560, 1440))
+                # cv2.resize(im0, (2560, 1440))
             else:
                 p, s, im0 = path, '', im0s
-                #cv2.resize(im0, (2560, 1440))
+                # cv2.resize(im0, (2560, 1440))
 
             height, width, channels = im0.shape
             cv2.line(im0, (0, int(height / 1.5)), (int(width), int(height / 1.5)), (255, 0, 0), thickness=3)
 
             if not control:
                 cv2.putText(im0, 'Totale koeretoejer: ' + str(displayAmount), (int(width * 0.02),
-                                                                                int(height * 0.4)),
+                                                                               int(height * 0.5)),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (50, 255, 255), 2)
+                cv2.putText(im0, 'Bil: ' + str(totalCars), (int(width * 0.02), int(height * 0.55)),
+                            cv2.FONT_HERSHEY_SIMPLEX, .75, (50, 255, 255), 2)
+                cv2.putText(im0, 'Motorcykel: ' + str(totalMotors), (int(width * 0.02), int(height * 0.60)),
+                            cv2.FONT_HERSHEY_SIMPLEX, .75, (50, 255, 255), 2)
+                cv2.putText(im0, 'Lastbil: ' + str(totalTrucks), (int(width * 0.02), int(height * 0.65)),
+                            cv2.FONT_HERSHEY_SIMPLEX, .75, (50, 255, 255), 2)
             else:
                 cv2.putText(im0, 'Totale koeretoejer: ' + str(displayAmount), (int(width * 0.02),
-                                                                               int(height * 0.4)),
+                                                                               int(height * 0.5)),
                             cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
 
 
-            #cv2.line(im0, (int(width / 1.8), int(height / 1.5)), (int(width), int(height / 1.5)), (255, 127, 0), thickness=3)
+            # cv2.line(im0, (int(width / 1.8), int(height / 1.5)), (int(width), int(height / 1.5)), (255, 127, 0), thickness=3)
 
             save_path = str(Path(out) / Path(p).name)
             txt_path = str(Path(out) / Path(p).stem) + ('_%g' % dataset.frame if dataset.mode == 'video' else '')
@@ -215,7 +224,7 @@ def detect(save_img):
                                 if (labelObj[idx] == 'car'):
                                     totalUpCar += 1
                                     to.counted = True
-                                elif (labelObj[idx] == 'motorbike'):
+                                elif (labelObj[idx] == 'motorcycle'):
                                     totalUpMotor += 1
                                     to.counted = True
                                 elif (labelObj[idx] == 'truck'):
@@ -227,7 +236,7 @@ def detect(save_img):
                                 if (labelObj[idx] == 'car'):
                                     totalDownCar += 1
                                     to.counted = True
-                                elif (labelObj[idx] == 'motorbike'):
+                                elif (labelObj[idx] == 'motorcycle'):
                                     totalDownMotor += 1
                                     to.counted = True
                                 elif (labelObj[idx] == 'truck'):
@@ -242,7 +251,7 @@ def detect(save_img):
                 oldTotalMotors = totalMotors
 
                 combinedAmount = totalDownCar + totalDownTruck + totalDownMotor + \
-                                     totalUpCar + totalUpMotor + totalUpTruck
+                                 totalUpCar + totalUpMotor + totalUpTruck
 
                 totalCars = totalDownCar + totalUpCar
                 totalTrucks = totalDownTruck + totalUpTruck
@@ -262,6 +271,9 @@ def detect(save_img):
 
                     if not oldTotalTrucks == totalTrucks:
                         dbInsOrUpdTruck(totalTrucks)
+
+                    if not oldTotalMotors == totalMotors:
+                        dbInsOrUpdMotorcycle(totalMotors)
 
                 if not control:
                     cv2.putText(im0, 'Frakoerende: ',
@@ -343,8 +355,8 @@ def detect(save_img):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str, default='yolov5s.pt', help='model.pt path(s)')
-    #parser.add_argument('--source', type=str, default='inference/videos/test.mp4', help='source')  # file/folder, 0 for webcam
-    parser.add_argument('--source', type=str, default='0', help='source')  # file/folder, 0 for webcam
+    parser.add_argument('--source', type=str, default='inference/videos/test2.mp4', help='source')  # file/folder, 0 for webcam
+    #parser.add_argument('--source', type=str, default='0', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--output', type=str, default='inference/output', help='output folder')  # output folder
     parser.add_argument('--img-size', type=int, default=1920, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.4, help='object confidence threshold')
