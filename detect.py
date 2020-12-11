@@ -13,9 +13,7 @@ import torch
 import torch.backends.cudnn as cudnn
 import numpy as np
 
-from Controller.MainController import dbInsOrUpdCar
-from Controller.MainController import dbInsOrUpdTruck
-from Controller.MainController import dbInsOrUpdMotorcycle
+from Controller.MainController import dbInsOrUpdVehicle
 import Controller.MainController as MainController
 from pyimagesearch.centroidtracker import CentroidTracker
 from pyimagesearch.trackableobject import TrackableObject
@@ -44,9 +42,9 @@ def detect(save_img):
 
     # Initialize
     set_logging()
-    cars = MainController.getLatestVehicleAmount('cars', 'carId')
-    motors = MainController.getLatestVehicleAmount('motorcycles', 'motorcycleId')
-    trucks = MainController.getLatestVehicleAmount('trucks', 'truckId')
+    cars = MainController.getLatestVehicleAmount("Car")
+    motors = MainController.getLatestVehicleAmount("Motorcycle")
+    trucks = MainController.getLatestVehicleAmount("Truck")
 
     totalCarAmount = cars + motors + trucks
     totalCars = cars
@@ -274,16 +272,17 @@ def detect(save_img):
                     displayTotalAmount += 1
 
                     if not oldTotalCars == totalCars:
-                        dbInsOrUpdCar(totalCars)
+                        dbInsOrUpdVehicle(totalCars, "Car")
                         displayCarAmount += 1
 
                     if not oldTotalTrucks == totalTrucks:
-                        dbInsOrUpdTruck(totalTrucks)
+                        dbInsOrUpdVehicle(totalTrucks, "Truck")
                         displayTruckAmount += 1
 
                     if not oldTotalMotors == totalMotors:
-                        dbInsOrUpdMotorcycle(totalMotors)
+                        dbInsOrUpdVehicle(totalMotors, "Motorcycle")
                         displayMotorAmount += 1
+
 
                 if not control:
                     cv2.putText(im0, 'Frakoerende: ',
@@ -365,8 +364,8 @@ def detect(save_img):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str, default='yolov5s.pt', help='model.pt path(s)')
-    #parser.add_argument('--source', type=str, default='inference/videos/test5.mp4', help='source')  # file/folder, 0 for webcam
-    parser.add_argument('--source', type=str, default='0', help='source')  # file/folder, 0 for webcam
+    parser.add_argument('--source', type=str, default='inference/videos/Motorcykel.mp4', help='source')  # file/folder, 0 for webcam
+    #parser.add_argument('--source', type=str, default='0', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--output', type=str, default='inference/output', help='output folder')  # output folder
     parser.add_argument('--img-size', type=int, default=1920, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.4, help='object confidence threshold')

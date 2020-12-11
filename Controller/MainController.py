@@ -2,24 +2,24 @@ from Controller import DBController as dbCtr
 import datetime
 
 
-def getLatestHour(TableName, Id):
-    return dbCtr.getLatestHour(TableName, Id)
+def getLatestHour():
+    return dbCtr.getLatestHour()
 
-def getLatestVehicleAmount(TableName, Id):
-    return dbCtr.getLatestVehicleAmount(TableName, Id)
+def getLatestVehicleAmount(vehicleType):
+    return dbCtr.getLatestVehicleAmount(vehicleType)
 
-def updateRow(TableName, Id):
-    dbCtr.updateRow(TableName, Id)
+def updateRow(vehicleType):
+    dbCtr.updateRow(vehicleType)
 
 def getLatestDate():
     return dbCtr.getLatestDate()
 
-def insertRow(carAmount, check, TableName):
-    dbCtr.insertRow(carAmount, check, TableName)
+def insertRow(carAmount, check, vehicleType):
+    dbCtr.insertRow(carAmount, check, vehicleType)
 
 def checkDate():
     now = datetime.datetime.now()
-    dateStr = now.strftime("%d %b %Y ")
+    dateStr = now.strftime("%d %b %Y")
     #dateStr = '06 Oct 2020'
     return dateStr
 
@@ -33,40 +33,18 @@ def checkHour():
     hourStr = now.strftime("%H")
     return hourStr
 
+def CheckIfTypeExists(typeName, hourStamp, dateStamp):
+    return dbCtr.CheckIfTypeExists(typeName, hourStamp, dateStamp)
+
+def IsVehiclesEmpty(vehicleType):
+    return dbCtr.IsVehiclesEmpty(vehicleType)
+
 # dbInsOrUps står for "database insert or update".
-def dbInsOrUpdCar(amount):
-    tableName = 'Cars'
-    id = 'CarId'
-    if getLatestHour(tableName, id) is None or getLatestDate() is None:
-        insertRow(amount, True, tableName)
-    elif not getLatestHour(tableName, id) == checkHour():
-        if getLatestDate() == checkDate() or not getLatestDate() == checkDate():
-            amount = 1
-            insertRow(amount, False, tableName)
-    elif getLatestHour(tableName, id) == checkHour() and getLatestDate() == checkDate():
-        updateRow(tableName, id)
-
-def dbInsOrUpdTruck(amount):
-    tableName = 'Trucks'
-    id = 'TruckId'
-    if getLatestHour(tableName, id) is None or getLatestDate() is None:
-        insertRow(amount, True, tableName)
-    elif not getLatestHour(tableName, id) == checkHour():
-        if getLatestDate() == checkDate() or not getLatestDate() == checkDate():
-            amount = 1
-            insertRow(amount, False, tableName)
-    elif getLatestHour(tableName, id) == checkHour() and getLatestDate() == checkDate():
-        updateRow(tableName, id)
-
-def dbInsOrUpdMotorcycle(amount):
-    tableName = 'Motorcycles'
-    id = 'MotorcycleId'
-    if getLatestHour(tableName, id) is None or getLatestDate() is None:
-        insertRow(amount, True, tableName)
-    elif not getLatestHour(tableName, id) == checkHour():
-        if getLatestDate() == checkDate() or not getLatestDate() == checkDate():
-            amount = 1
-            insertRow(amount, False, tableName)
-    elif getLatestHour(tableName, id) == checkHour() and getLatestDate() == checkDate():
-        updateRow(tableName, id)
-
+def dbInsOrUpdVehicle(amount, vehicleType):
+    if IsVehiclesEmpty(vehicleType) == 0:
+        insertRow(amount, True, vehicleType)
+    elif CheckIfTypeExists(vehicleType, checkHour(), checkDate()) == 0:
+        amount = 1
+        insertRow(amount, False, vehicleType)
+    else:
+        updateRow(vehicleType)
