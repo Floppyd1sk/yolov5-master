@@ -26,27 +26,6 @@ def getLatestVehicleAmount(vehicleType):
         else:
             return 0
 
-
-# Updates the latest row in Cars table
-def updateRow(vehicleType):
-    try:
-        cn = pyodbc.connect(connString, autocommit=True)
-        latestRow = getLatestRow()
-        newNumber = getLatestVehicleAmount(vehicleType) + 1
-        now = datetime.datetime.now()
-        dateStr = now.strftime("%d %b %Y")
-        hourStr = now.strftime("%H")
-        sql = "Update Vehicle set VehicleAmount = %s WHERE TypeName = '%s' and DateTimeStamp = %s and" % (newNumber, vehicleType, hourStr, dateStr)
-
-        cursor = cn.execute(sql)
-        cn.commit()
-    except Exception as e:
-        print('Error connecting to database: ', str(e))
-
-    finally:
-        cn.close()
-        print("Updated VehicleId ("+str(vehicleType)+"): " + str(latestRow) + " to Amount: " + str(getLatestVehicleAmount(vehicleType)))
-
 # Inserts a new row into the Cars table
 def insertRow(number, check, vehicleType):
     try:
