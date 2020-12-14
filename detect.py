@@ -6,8 +6,6 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-
-
 import cv2
 import torch
 import torch.backends.cudnn as cudnn
@@ -271,17 +269,17 @@ def detect(save_img):
                 if not oldCarAmount == totalCarAmount:
                     displayTotalAmount += 1
 
-                    if not oldTotalCars == totalCars:
-                        dbInsOrUpdVehicle(totalCars, "Car")
-                        displayCarAmount += 1
+                if not oldTotalCars == totalCars:
+                    dbInsOrUpdVehicle("Car")
+                    displayCarAmount += 1
 
-                    if not oldTotalTrucks == totalTrucks:
-                        dbInsOrUpdVehicle(totalTrucks, "Truck")
-                        displayTruckAmount += 1
+                if not oldTotalTrucks == totalTrucks:
+                    dbInsOrUpdVehicle("Truck")
+                    displayTruckAmount += 1
 
-                    if not oldTotalMotors == totalMotors:
-                        dbInsOrUpdVehicle(totalMotors, "Motorcycle")
-                        displayMotorAmount += 1
+                if not oldTotalMotors == totalMotors:
+                    dbInsOrUpdVehicle("Motorcycle")
+                    displayMotorAmount += 1
 
 
                 if not control:
@@ -325,6 +323,7 @@ def detect(save_img):
                     cv2.putText(im0, 'Lastbil: ' + str(totalDownTruck), (int(width * 0.02), int(height * 0.25)),
                                 cv2.FONT_HERSHEY_SIMPLEX, 3, (50, 255, 255), 3)
 
+
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
 
@@ -364,7 +363,7 @@ def detect(save_img):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str, default='yolov5s.pt', help='model.pt path(s)')
-    parser.add_argument('--source', type=str, default='inference/videos/Motorcykel.mp4', help='source')  # file/folder, 0 for webcam
+    parser.add_argument('--source', type=str, default='inference/videos/test.mp4', help='source')  # file/folder, 0 for webcam
     #parser.add_argument('--source', type=str, default='0', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--output', type=str, default='inference/output', help='output folder')  # output folder
     parser.add_argument('--img-size', type=int, default=1920, help='inference size (pixels)')
